@@ -18,7 +18,7 @@ jobs:
     env:
       NOTION_ENV: ${{ secrets.NOTION_ENV }}
       NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
-      NOTION_WORKERS_CONFIG_FILE: ${{ runner.temp }}/workers.json
+      NOTION_WORKERS_CONFIG_FILE: /tmp/workers.json
       NOTION_WORKERS_CONFIG_VERSION: ${{ secrets.NOTION_WORKERS_CONFIG_VERSION }}
       NOTION_SPACE_ID: ${{ secrets.NOTION_SPACE_ID }}
       NOTION_WORKER_ID: ${{ secrets.NOTION_WORKER_ID }}
