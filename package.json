@@ -1,0 +1,28 @@
+{
+  "name": "@notionhq/workers-template",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "lint": "oxlint src .examples",
+    "lint:fix": "oxlint --fix src .examples",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  },
+  "dependencies": {
+    "@notionhq/workers": ">=0.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "oxfmt": "^0.49.0",
+    "oxlint": "^1.64.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.9.2"
+  }
+}
