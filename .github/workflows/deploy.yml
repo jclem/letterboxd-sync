@@ -1,0 +1,88 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy worker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      NOTION_ENV: ${{ secrets.NOTION_ENV }}
+      NOTION_API_TOKEN: ${{ secrets.NOTION_API_TOKEN }}
+      NOTION_WORKERS_CONFIG_FILE: ${{ runner.temp }}/workers.json
+      NOTION_WORKERS_CONFIG_VERSION: ${{ secrets.NOTION_WORKERS_CONFIG_VERSION }}
+      NOTION_SPACE_ID: ${{ secrets.NOTION_SPACE_ID }}
+      NOTION_WORKER_ID: ${{ secrets.NOTION_WORKER_ID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run fmt:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Install Notion CLI
+        env:
+          NTN_INSTALL_DIR: ${{ runner.temp }}/ntn
+        run: |
+          curl -fsSL https://ntn.dev | bash
+          echo "$NTN_INSTALL_DIR" >> "$GITHUB_PATH"
+
+      - name: Write worker config
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const required = [
+            "NOTION_ENV",
+            "NOTION_WORKERS_CONFIG_FILE",
+            "NOTION_WORKERS_CONFIG_VERSION",
+            "NOTION_SPACE_ID",
+            "NOTION_WORKER_ID",
+          ];
+          const missing = required.filter((name) => !process.env[name]);
+
+          if (missing.length > 0) {
+            throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+          }
+
+          fs.writeFileSync(
+            process.env.NOTION_WORKERS_CONFIG_FILE,
+            `${JSON.stringify(
+              {
+                version: process.env.NOTION_WORKERS_CONFIG_VERSION,
+                environment: process.env.NOTION_ENV,
+                spaceId: process.env.NOTION_SPACE_ID,
+                workerId: process.env.NOTION_WORKER_ID,
+              },
+              null,
+              2,
+            )}\n`,
+          );
+          NODE
+
+      - name: Deploy worker
+        run: ntn workers deploy
