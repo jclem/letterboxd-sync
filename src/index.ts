@@ -27,12 +27,6 @@ type DiaryProperties = {
   Rewatch?: ReturnType<typeof Builder.checkbox>;
 };
 
-const username = process.env.LETTERBOXD_USERNAME?.trim();
-
-if (!username) {
-  throw new Error("Missing LETTERBOXD_USERNAME environment variable.");
-}
-
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const decodeXml = (value: string) => {
@@ -204,6 +198,12 @@ worker.sync("letterboxdDiarySync", {
   mode: "incremental",
   schedule: "1d",
   execute: async () => {
+    const username = process.env.LETTERBOXD_USERNAME?.trim();
+
+    if (!username) {
+      throw new Error("Missing LETTERBOXD_USERNAME environment variable.");
+    }
+
     const xml = await fetchDiaryFeed(username);
     const entries = parseDiaryEntries(xml, username);
 
